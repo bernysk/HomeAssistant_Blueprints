@@ -1,12 +1,13 @@
 blueprint:
-  name: "IKEA Bilresa Scrollwheel - Light Control V1.0.4"
+  name: "IKEA Bilresa Scrollwheel - Light Control V1.0.5"
   description: >
     The ultimate LIGHT controller for the IKEA Bilresa Smart Scroll Wheel via Matter.
     (NOT for Media/Volume! NOT for the 2-Button Remote!)
     
-    VERSION 1.0.4: Code cleanup. Removed 'short_release' placebo and migrated restart-protection to native 'not_from' triggers for better performance.
-    VERSION 1.0.3: Bugfix: Fixed "ghost switching" after Home Assistant restarts with a new template condition block.
-    VERSION 1.0.2: Safety update. Added template fallbacks for RGB/Kelvin shifts and optimized syntax.
+    VERSION 1.0.5: UI Compatibility Update. Reverted the 'not_from' trigger back to the global template condition because it broke the Home Assistant Visual Editor.
+    VERSION 1.0.4: Code cleanup. Removed 'short_release' placebo for multi_press events.
+    VERSION 1.0.3: Bugfix: Fixed "ghost switching" after Home Assistant restarts.
+    VERSION 1.0.2: Safety update. Added template fallbacks for RGB/Kelvin shifts.
     VERSION 1.0.1: Fixed "Bouncing/Jumping" issues (added debounce logic).
     
     YOU DECIDE EVERYTHING:
@@ -217,41 +218,23 @@ triggers:
   - trigger: state
     entity_id: !input sensor_1
     id: sc_1_up
-    not_from:
-      - "unknown"
-      - "unavailable"
   - trigger: state
     entity_id: !input sensor_2
     id: sc_1_down
-    not_from:
-      - "unknown"
-      - "unavailable"
   # Scroll 2
   - trigger: state
     entity_id: !input sensor_4
     id: sc_2_down
-    not_from:
-      - "unknown"
-      - "unavailable"
   - trigger: state
     entity_id: !input sensor_5
     id: sc_2_up
-    not_from:
-      - "unknown"
-      - "unavailable"
   # Scroll 3
   - trigger: state
     entity_id: !input sensor_7
     id: sc_3_up
-    not_from:
-      - "unknown"
-      - "unavailable"
   - trigger: state
     entity_id: !input sensor_8
     id: sc_3_down
-    not_from:
-      - "unknown"
-      - "unavailable"
 
   # Buttons
   - trigger: state
@@ -260,11 +243,11 @@ triggers:
       - !input event_taste_2
       - !input event_taste_3
     id: btn_event
-    not_from:
-      - "unknown"
-      - "unavailable"
 
-conditions: []
+conditions:
+  - condition: template
+    value_template: >-
+      {{ trigger.from_state is defined and trigger.from_state.state not in ['unknown', 'unavailable'] }}
 
 actions:
   # ==========================================================
