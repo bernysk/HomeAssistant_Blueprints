@@ -1,21 +1,22 @@
 blueprint:
-  name: "IKEA Bilresa Scrollwheel - Multi-Light Controller V2.3"
+  name: "IKEA Bilresa Scrollwheel - Multi-Light Controller V2.0"
   description: >
     Multi-light controller for the IKEA Bilresa Smart Scroll Wheel via Matter.
-    Each scroll zone and each button can target a DIFFERENT light (or the same one).
+    Each zone has ONE light that is shared between scroll and button.
 
     FEATURES:
-    - 3 Scroll Zones: Each with its own Light + Function (Brightness/Kelvin/RGB/Presets).
-    - 3 Buttons: Each with its own Light + Single-Click / Double-Click / Hold action.
-    - All 9 actions available for every gesture slot (same dropdown everywhere).
+    - 3 Zones: Each with its own Light, Scroll Function, and Button actions.
+    - All 9 actions available for Single / Double / Hold (same dropdown).
 
     ENTITY MAPPING:
-    Your Bilresa exposes 9 numbered entities. The mapping is:
-      Zone 1 scroll: Sensor (1) + Sensor (2), Button: Event (3)
-      Zone 2 scroll: Sensor (4) + Sensor (5), Button: Event (6)
-      Zone 3 scroll: Sensor (7) + Sensor (8), Button: Event (9)
-    Search for your device name (e.g. "bilresa") in the entity picker.
+    Your Bilresa exposes 9 numbered entities per zone:
+      Zone 1: Sensor (1) + (2) for scroll, Event (3) for button
+      Zone 2: Sensor (4) + (5) for scroll, Event (6) for button
+      Zone 3: Sensor (7) + (8) for scroll, Event (9) for button
+    Search your device name (e.g. "bilresa") in the entity picker.
     ENABLE Sensors 1,2,4,5,7,8 and Events 3,6,9. DISABLE Sensors 3,6,9.
+    NOTE: HA blueprints cannot auto-derive entities from a device picker
+    (triggers need concrete entity IDs at load time). Pick them manually.
 
     HELPER GROUP:
     If controlling multiple lights from one zone, use a Light Group helper.
@@ -25,13 +26,13 @@ blueprint:
 
   input:
     # ==========================================================
-    #  SCROLL ZONE 1 (Sensors 1 & 2)
+    #  ZONE 1 — Scroll (Sensors 1 & 2) + Button (Event 3)
     # ==========================================================
-    scroll_1_light:
-      name: "Zone 1 → Light"
+    zone_1_light:
+      name: "Zone 1 → Light (scroll + button)"
       selector: { entity: { domain: light } }
     scroll_1_func:
-      name: "Zone 1 → Function"
+      name: "Zone 1 → Scroll Function"
       default: "brightness"
       selector: &scroll_func
         select:
@@ -45,37 +46,8 @@ blueprint:
               value: "rgb"
             - label: "Presets (Work ↔ Cozy)"
               value: "preset"
-
-    # ==========================================================
-    #  SCROLL ZONE 2 (Sensors 4 & 5)
-    # ==========================================================
-    scroll_2_light:
-      name: "Zone 2 → Light"
-      selector: { entity: { domain: light } }
-    scroll_2_func:
-      name: "Zone 2 → Function"
-      default: "brightness"
-      selector: *scroll_func
-
-    # ==========================================================
-    #  SCROLL ZONE 3 (Sensors 7 & 8)
-    # ==========================================================
-    scroll_3_light:
-      name: "Zone 3 → Light"
-      selector: { entity: { domain: light } }
-    scroll_3_func:
-      name: "Zone 3 → Function"
-      default: "brightness"
-      selector: *scroll_func
-
-    # ==========================================================
-    #  BUTTON 1 — Event (3)
-    # ==========================================================
-    btn_1_light:
-      name: "Button 1 → Light"
-      selector: { entity: { domain: light } }
     btn_1_single:
-      name: "Button 1 → Single Click"
+      name: "Zone 1 → Button Single Click"
       default: "toggle"
       selector: &action_list
         select:
@@ -100,49 +72,57 @@ blueprint:
             - label: "No Action"
               value: "none"
     btn_1_double:
-      name: "Button 1 → Double Click"
+      name: "Zone 1 → Button Double Click"
       default: "set_bright"
       selector: *action_list
     btn_1_hold:
-      name: "Button 1 → Hold"
+      name: "Zone 1 → Button Hold"
       default: "set_dim"
       selector: *action_list
 
     # ==========================================================
-    #  BUTTON 2 — Event (6)
+    #  ZONE 2 — Scroll (Sensors 4 & 5) + Button (Event 6)
     # ==========================================================
-    btn_2_light:
-      name: "Button 2 → Light"
+    zone_2_light:
+      name: "Zone 2 → Light (scroll + button)"
       selector: { entity: { domain: light } }
+    scroll_2_func:
+      name: "Zone 2 → Scroll Function"
+      default: "brightness"
+      selector: *scroll_func
     btn_2_single:
-      name: "Button 2 → Single Click"
+      name: "Zone 2 → Button Single Click"
       default: "toggle"
       selector: *action_list
     btn_2_double:
-      name: "Button 2 → Double Click"
+      name: "Zone 2 → Button Double Click"
       default: "set_bright"
       selector: *action_list
     btn_2_hold:
-      name: "Button 2 → Hold"
+      name: "Zone 2 → Button Hold"
       default: "set_dim"
       selector: *action_list
 
     # ==========================================================
-    #  BUTTON 3 — Event (9)
+    #  ZONE 3 — Scroll (Sensors 7 & 8) + Button (Event 9)
     # ==========================================================
-    btn_3_light:
-      name: "Button 3 → Light"
+    zone_3_light:
+      name: "Zone 3 → Light (scroll + button)"
       selector: { entity: { domain: light } }
+    scroll_3_func:
+      name: "Zone 3 → Scroll Function"
+      default: "brightness"
+      selector: *scroll_func
     btn_3_single:
-      name: "Button 3 → Single Click"
+      name: "Zone 3 → Button Single Click"
       default: "toggle"
       selector: *action_list
     btn_3_double:
-      name: "Button 3 → Double Click"
+      name: "Zone 3 → Button Double Click"
       default: "set_bright"
       selector: *action_list
     btn_3_hold:
-      name: "Button 3 → Hold"
+      name: "Zone 3 → Button Hold"
       default: "set_dim"
       selector: *action_list
 
@@ -231,13 +211,10 @@ max_exceeded: silent
 #  VARIABLES
 # ==============================================================
 variables:
-  # Lights
-  light_z1: !input scroll_1_light
-  light_z2: !input scroll_2_light
-  light_z3: !input scroll_3_light
-  light_b1: !input btn_1_light
-  light_b2: !input btn_2_light
-  light_b3: !input btn_3_light
+  # Lights (shared per zone: scroll + button)
+  light_z1: !input zone_1_light
+  light_z2: !input zone_2_light
+  light_z3: !input zone_3_light
 
   # Scroll functions
   func_z1: !input scroll_1_func
@@ -393,9 +370,9 @@ actions:
         sequence:
           - variables:
               btn_light: >
-                {% if trigger.entity_id == id_e1 %} {{ light_b1 }}
-                {% elif trigger.entity_id == id_e2 %} {{ light_b2 }}
-                {% elif trigger.entity_id == id_e3 %} {{ light_b3 }}
+                {% if trigger.entity_id == id_e1 %} {{ light_z1 }}
+                {% elif trigger.entity_id == id_e2 %} {{ light_z2 }}
+                {% elif trigger.entity_id == id_e3 %} {{ light_z3 }}
                 {% endif %}
               evt: "{{ trigger.to_state.attributes.event_type | default('') }}"
               act: >
