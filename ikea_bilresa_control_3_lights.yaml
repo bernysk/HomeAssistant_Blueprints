@@ -1,5 +1,5 @@
 blueprint:
-  name: "IKEA Bilresa Scrollwheel - Multi-Light Controller V2.0"
+  name: "IKEA Bilresa Scrollwheel - Multi-Light Controller V2.3"
   description: >
     Multi-light controller for the IKEA Bilresa Smart Scroll Wheel via Matter.
     Each scroll zone and each button can target a DIFFERENT light (or the same one).
@@ -153,14 +153,26 @@ blueprint:
       name: "Step: Brightness (%)"
       default: 10
       selector: { number: { min: 1, max: 50, unit_of_measurement: "%" } }
+    trans_pct:
+      name: "Transition: Brightness (s)"
+      default: 0
+      selector: { number: { min: 0, max: 5, step: 0.1, unit_of_measurement: "s" } }
     step_kelvin:
       name: "Step: Kelvin (K)"
       default: 400
       selector: { number: { min: 100, max: 1000, unit_of_measurement: "K" } }
+    trans_kelvin:
+      name: "Transition: Kelvin (s)"
+      default: 0
+      selector: { number: { min: 0, max: 5, step: 0.1, unit_of_measurement: "s" } }
     step_hue:
       name: "Step: RGB Hue (°)"
       default: 15
       selector: { number: { min: 5, max: 90, unit_of_measurement: "°" } }
+    trans_hue:
+      name: "Transition: RGB Hue (s)"
+      default: 0
+      selector: { number: { min: 0, max: 5, step: 0.1, unit_of_measurement: "s" } }
     val_bright:
       name: "Preset: Bright (%)"
       default: 80
@@ -247,6 +259,9 @@ variables:
   s_p: !input step_pct
   s_k: !input step_kelvin
   s_h: !input step_hue
+  t_p: !input trans_pct
+  t_k: !input trans_kelvin
+  t_h: !input trans_hue
   v_bri: !input val_bright
   v_dim: !input val_dim
   v_cold: !input val_cold
@@ -330,7 +345,7 @@ actions:
                     target: { entity_id: "{{ scroll_light }}" }
                     data:
                       brightness_step_pct: "{{ (s_p | float(default=10)) * direction }}"
-                      transition: 0
+                      transition: "{{ t_p | float(default=0) }}"
 
               # --- Kelvin ---
               - conditions: "{{ active_func == 'kelvin' }}"
@@ -344,7 +359,7 @@ actions:
                         {% if direction == 1 %} {{ ([cur + step, 6500] | min) | int }}
                         {% else %} {{ ([cur - step, 2000] | max) | int }}
                         {% endif %}
-                      transition: 0
+                      transition: "{{ t_k | float(default=0) }}"
 
               # --- RGB Hue ---
               - conditions: "{{ active_func == 'rgb' }}"
@@ -358,7 +373,7 @@ actions:
                         {% set s = hs[1] | float(default=100) if hs is not none else 100 %}
                         {% set step = s_h | float(default=15) %}
                         {{ [(h + (step * direction)) % 360, s] }}
-                      transition: 0
+                      transition: "{{ t_h | float(default=0) }}"
 
               # --- Presets ---
               - conditions: "{{ active_func == 'preset' }}"
