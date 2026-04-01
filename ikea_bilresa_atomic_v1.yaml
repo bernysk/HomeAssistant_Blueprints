@@ -1,10 +1,9 @@
 blueprint:
-  name: "IKEA Bilresa Scrollwheel - Light Control V1.0.5"
+  name: "IKEA Bilresa Scrollwheel - Light Control V1.0.4"
   description: >
     The ultimate LIGHT controller for the IKEA Bilresa Smart Scroll Wheel via Matter.
     (NOT for Media/Volume! NOT for the 2-Button Remote!)
     
-    VERSION 1.0.5: UI Compatibility Update. Reverted the 'not_from' trigger back to the global template condition because it broke the Home Assistant Visual Editor.
     VERSION 1.0.4: Code cleanup. Removed 'short_release' placebo for multi_press events.
     VERSION 1.0.3: Bugfix: Fixed "ghost switching" after Home Assistant restarts.
     VERSION 1.0.2: Safety update. Added template fallbacks for RGB/Kelvin shifts.
