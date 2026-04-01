@@ -1,5 +1,5 @@
 blueprint:
-  name: "IKEA Bilresa Scrollwheel - Multi-Light Controller V2.0"
+  name: "IKEA Bilresa Scrollwheel - Multi-Light Controller V2.4"
   description: >
     Multi-light controller for the IKEA Bilresa Smart Scroll Wheel via Matter.
     Each zone has ONE light that is shared between scroll and button.
