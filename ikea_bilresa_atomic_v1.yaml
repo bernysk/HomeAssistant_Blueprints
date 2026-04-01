@@ -1,7 +1,8 @@
 blueprint:
-  name: "IKEA Bilresa V1.0 (Atomic Edition)"
+  name: "IKEA Bilresa Scrollwheel - Light Control V1.0"
   description: >
-    The ultimate controller with maximum freedom (Atomic Control).
+    The ultimate LIGHT controller for the IKEA Bilresa Smart Scroll Wheel via Matter.
+    (NOT for Media/Volume! NOT for the 2-Button Remote!)
     
     VERSION 1.0: Initial Release with optimized direction detection and Atomic Control.
     
