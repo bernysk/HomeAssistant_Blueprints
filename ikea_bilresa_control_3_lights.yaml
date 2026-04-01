@@ -21,7 +21,8 @@ blueprint:
     HELPER GROUP:
     If controlling multiple lights from one zone, use a Light Group helper.
 
-    Based on V1.0.4 by original author. Multi-light rewrite V2.0.
+    Based on V1.0.4 by original author stone13. Multi-light rewrite V2.4 by bernysk using Claude AI.
+  # original reference https://gist.github.com/stone13/63a778bdbf55efbd712ade1d074e9dbb
   domain: automation
 
   input:
