@@ -3,7 +3,7 @@ blueprint:
   description: >
     The ultimate controller with maximum freedom (Atomic Control).
     
-    FIX V1.0: Direction detection fixed (Stable like V0.1).
+    VERSION 1.0: Initial Release with optimized direction detection and Atomic Control.
     
     YOU DECIDE EVERYTHING:
     - 3 Scroll Zones: Choose the function (Brightness, Kelvin, RGB, Presets).
