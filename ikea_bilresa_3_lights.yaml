@@ -6,9 +6,8 @@ blueprint:
 
     FEATURES:
     - 3 Scroll Zones: Each with its own Light + Function (Brightness/Kelvin/RGB/Presets).
-    - 3 Buttons: Each with its own Light + Double-Click action + Hold action.
-    - Single click on any button always toggles that button's assigned light.
-    - All 9 actions available for every Double-Click and Hold slot.
+    - 3 Buttons: Each with its own Light + Single-Click / Double-Click / Hold action.
+    - All 9 actions available for every gesture slot (same dropdown everywhere).
 
     ENTITY MAPPING:
     Your Bilresa exposes 9 numbered entities. The mapping is:
@@ -55,7 +54,7 @@ blueprint:
       selector: { entity: { domain: light } }
     scroll_2_func:
       name: "Zone 2 → Function"
-      default: "kelvin"
+      default: "brightness"
       selector: *scroll_func
 
     # ==========================================================
@@ -66,7 +65,7 @@ blueprint:
       selector: { entity: { domain: light } }
     scroll_3_func:
       name: "Zone 3 → Function"
-      default: "preset"
+      default: "brightness"
       selector: *scroll_func
 
     # ==========================================================
@@ -75,9 +74,9 @@ blueprint:
     btn_1_light:
       name: "Button 1 → Light"
       selector: { entity: { domain: light } }
-    btn_1_double:
-      name: "Button 1 → Double Click"
-      default: "set_bright"
+    btn_1_single:
+      name: "Button 1 → Single Click"
+      default: "toggle"
       selector: &action_list
         select:
           mode: dropdown
@@ -100,6 +99,10 @@ blueprint:
               value: "set_color_on"
             - label: "No Action"
               value: "none"
+    btn_1_double:
+      name: "Button 1 → Double Click"
+      default: "set_bright"
+      selector: *action_list
     btn_1_hold:
       name: "Button 1 → Hold"
       default: "set_dim"
@@ -111,13 +114,17 @@ blueprint:
     btn_2_light:
       name: "Button 2 → Light"
       selector: { entity: { domain: light } }
+    btn_2_single:
+      name: "Button 2 → Single Click"
+      default: "toggle"
+      selector: *action_list
     btn_2_double:
       name: "Button 2 → Double Click"
-      default: "set_cold"
+      default: "set_bright"
       selector: *action_list
     btn_2_hold:
       name: "Button 2 → Hold"
-      default: "set_warm"
+      default: "set_dim"
       selector: *action_list
 
     # ==========================================================
@@ -126,6 +133,10 @@ blueprint:
     btn_3_light:
       name: "Button 3 → Light"
       selector: { entity: { domain: light } }
+    btn_3_single:
+      name: "Button 3 → Single Click"
+      default: "toggle"
+      selector: *action_list
     btn_3_double:
       name: "Button 3 → Double Click"
       default: "set_bright"
@@ -222,10 +233,13 @@ variables:
   func_z3: !input scroll_3_func
 
   # Button actions
+  b1_s: !input btn_1_single
   b1_d: !input btn_1_double
   b1_h: !input btn_1_hold
+  b2_s: !input btn_2_single
   b2_d: !input btn_2_double
   b2_h: !input btn_2_hold
+  b3_s: !input btn_3_single
   b3_d: !input btn_3_double
   b3_h: !input btn_3_hold
 
@@ -371,7 +385,10 @@ actions:
               evt: "{{ trigger.to_state.attributes.event_type | default('') }}"
               act: >
                 {% if evt == 'multi_press_1' %}
-                  toggle
+                  {% if trigger.entity_id == id_e1 %} {{ b1_s }}
+                  {% elif trigger.entity_id == id_e2 %} {{ b2_s }}
+                  {% elif trigger.entity_id == id_e3 %} {{ b3_s }}
+                  {% endif %}
                 {% elif evt == 'multi_press_2' %}
                   {% if trigger.entity_id == id_e1 %} {{ b1_d }}
                   {% elif trigger.entity_id == id_e2 %} {{ b2_d }}
