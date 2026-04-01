@@ -191,10 +191,10 @@ blueprint:
       name: "Sensor (2) — Zone 1 scroll down"
       selector: { entity: { domain: sensor } }
     sensor_4:
-      name: "Sensor (4) — Zone 2 scroll down"
+      name: "Sensor (4) — Zone 2 scroll up"
       selector: { entity: { domain: sensor } }
     sensor_5:
-      name: "Sensor (5) — Zone 2 scroll up"
+      name: "Sensor (5) — Zone 2 scroll down"
       selector: { entity: { domain: sensor } }
     sensor_7:
       name: "Sensor (7) — Zone 3 scroll up"
@@ -271,10 +271,10 @@ triggers:
   # Zone 2
   - trigger: state
     entity_id: !input sensor_4
-    id: sc_2_down
+    id: sc_2_up
   - trigger: state
     entity_id: !input sensor_5
-    id: sc_2_up
+    id: sc_2_down
   # Zone 3
   - trigger: state
     entity_id: !input sensor_7
