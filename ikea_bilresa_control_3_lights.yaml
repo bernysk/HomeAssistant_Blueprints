@@ -1,5 +1,5 @@
 blueprint:
-  name: "IKEA Bilresa Scrollwheel - Multi-Light Controller V2.4"
+  name: "IKEA Bilresa Scrollwheel - Multi-Light Controller V2.5"
   description: >
     Multi-light controller for the IKEA Bilresa Smart Scroll Wheel via Matter.
     Each zone has ONE light that is shared between scroll and button.
@@ -21,7 +21,7 @@ blueprint:
     HELPER GROUP:
     If controlling multiple lights from one zone, use a Light Group helper.
 
-    Based on V1.0.4 by original author stone13. Multi-light rewrite V2.4 by bernysk using Claude AI.
+    Based on V1.0.4 by original author stone13. Multi-light rewrite V2.5 by bernysk using Claude AI.
   # original reference https://gist.github.com/stone13/63a778bdbf55efbd712ade1d074e9dbb
   domain: automation
 
@@ -170,6 +170,10 @@ blueprint:
       name: "Preset: Warm (K)"
       default: 2200
       selector: { number: { min: 2000, max: 6500 } }
+    debounce_ms:
+      name: "Debounce (ms)"
+      default: 150
+      selector: { number: { min: 0, max: 500, step: 10, unit_of_measurement: "ms" } }
 
     # ==========================================================
     #  ENTITY MAPPING — Sensors (scroll) & Events (buttons)
@@ -244,6 +248,7 @@ variables:
   v_dim: !input val_dim
   v_cold: !input val_cold
   v_warm: !input val_warm
+  debounce: !input debounce_ms
 
   # Event entity IDs (for matching in actions)
   id_e1: !input event_btn_1
@@ -446,6 +451,6 @@ actions:
                     target: { entity_id: "{{ btn_light }}" }
                     data: { hs_color: [0, 100], brightness_pct: 80, transition: 0.5 }
 
-  # V1.0.1+ debounce
+  # Debounce
   - delay:
-      milliseconds: 150
+      milliseconds: "{{ debounce | int(default=150) }}"
