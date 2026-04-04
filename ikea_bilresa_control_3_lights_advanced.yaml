@@ -1,0 +1,563 @@
+blueprint:
+  name: "IKEA Bilresa Scrollwheel - Multi-Light Controller V2.7"
+  description: >
+    Multi-light controller for the IKEA Bilresa Smart Scroll Wheel via Matter.
+    Each zone has SEPARATE lights for scroll and button (can be the same entity).
+
+    FEATURES:
+    - 3 Zones: Each with Scroll Light, Button Light, and dynamic Scroll Function.
+    - Scroll function controlled by an input_select helper per zone.
+    - 16 button actions incl. "Cycle Mode" to rotate scroll functions at runtime.
+    - Configurable debounce.
+
+    SETUP — input_select HELPERS:
+    Create one input_select helper per zone in HA
+    (Settings → Devices → Helpers → Dropdown).
+    Add ONLY the modes your light supports as options:
+      • brightness   — all lights
+      • kelvin       — white-spectrum lights
+      • rgb          — color lights only
+      • preset       — all lights
+    Example: a non-RGB light → options: brightness, kelvin, preset
+    Example: an RGB light    → options: brightness, kelvin, rgb, preset
+    Option values must be typed exactly as shown (lowercase).
+
+    ENTITY MAPPING:
+    Your Bilresa exposes 9 numbered entities per zone:
+      Zone 1: Sensor (1) + (2) for scroll, Event (3) for button
+      Zone 2: Sensor (4) + (5) for scroll, Event (6) for button
+      Zone 3: Sensor (7) + (8) for scroll, Event (9) for button
+    Search your device name (e.g. "bilresa") in the entity picker.
+    ENABLE Sensors 1,2,4,5,7,8 and Events 3,6,9. DISABLE Sensors 3,6,9.
+
+    HELPER GROUP:
+    If controlling multiple lights from one zone, use a Light Group helper.
+
+    Based on V1.0.4 by original author stone13. Multi-light rewrite V2.7 by bernysk using Claude AI.
+  # original reference https://gist.github.com/stone13/63a778bdbf55efbd712ade1d074e9dbb
+  domain: automation
+
+  input:
+    # ==========================================================
+    #  ZONE 1 — Scroll (Sensors 1 & 2) + Button (Event 3)
+    # ==========================================================
+    zone_1_scroll_light:
+      name: "Zone 1 → Scroll Light"
+      selector: { entity: { domain: light } }
+    zone_1_mode_helper:
+      name: "Zone 1 → Scroll Mode Helper (input_select)"
+      description: "input_select with options: brightness, kelvin, rgb, preset"
+      selector: { entity: { domain: input_select } }
+    zone_1_btn_light:
+      name: "Zone 1 → Button Light"
+      selector: { entity: { domain: light } }
+    btn_1_single:
+      name: "Zone 1 → Button Single Click"
+      default: "toggle"
+      selector: &action_list
+        select:
+          mode: dropdown
+          options:
+            - label: "Toggle On/Off"
+              value: "toggle"
+            - label: "→ Bright"
+              value: "set_bright"
+            - label: "→ Dimmed"
+              value: "set_dim"
+            - label: "→ Cool White"
+              value: "set_cold"
+            - label: "→ Warm White"
+              value: "set_warm"
+            - label: "→ White (RGB Reset)"
+              value: "set_white"
+            - label: "→ Red (Signal)"
+              value: "set_red"
+            - label: "→ Enable Color (Saturation On)"
+              value: "set_color_on"
+            - label: "↑ Brightness Step Up"
+              value: "step_bright_up"
+            - label: "↓ Brightness Step Down"
+              value: "step_bright_down"
+            - label: "↑ Kelvin Step Up (Cooler)"
+              value: "step_kelvin_up"
+            - label: "↓ Kelvin Step Down (Warmer)"
+              value: "step_kelvin_down"
+            - label: "↑ Hue Step Up"
+              value: "step_hue_up"
+            - label: "↓ Hue Step Down"
+              value: "step_hue_down"
+            - label: "⟳ Cycle Scroll Mode"
+              value: "cycle_mode"
+            - label: "No Action"
+              value: "none"
+    btn_1_double:
+      name: "Zone 1 → Button Double Click"
+      default: "cycle_mode"
+      selector: *action_list
+    btn_1_hold:
+      name: "Zone 1 → Button Hold"
+      default: "set_dim"
+      selector: *action_list
+
+    # ==========================================================
+    #  ZONE 2 — Scroll (Sensors 4 & 5) + Button (Event 6)
+    # ==========================================================
+    zone_2_scroll_light:
+      name: "Zone 2 → Scroll Light"
+      selector: { entity: { domain: light } }
+    zone_2_mode_helper:
+      name: "Zone 2 → Scroll Mode Helper (input_select)"
+      description: "input_select with options: brightness, kelvin, rgb, preset"
+      selector: { entity: { domain: input_select } }
+    zone_2_btn_light:
+      name: "Zone 2 → Button Light"
+      selector: { entity: { domain: light } }
+    btn_2_single:
+      name: "Zone 2 → Button Single Click"
+      default: "toggle"
+      selector: *action_list
+    btn_2_double:
+      name: "Zone 2 → Button Double Click"
+      default: "cycle_mode"
+      selector: *action_list
+    btn_2_hold:
+      name: "Zone 2 → Button Hold"
+      default: "set_dim"
+      selector: *action_list
+
+    # ==========================================================
+    #  ZONE 3 — Scroll (Sensors 7 & 8) + Button (Event 9)
+    # ==========================================================
+    zone_3_scroll_light:
+      name: "Zone 3 → Scroll Light"
+      selector: { entity: { domain: light } }
+    zone_3_mode_helper:
+      name: "Zone 3 → Scroll Mode Helper (input_select)"
+      description: "input_select with options: brightness, kelvin, rgb, preset"
+      selector: { entity: { domain: input_select } }
+    zone_3_btn_light:
+      name: "Zone 3 → Button Light"
+      selector: { entity: { domain: light } }
+    btn_3_single:
+      name: "Zone 3 → Button Single Click"
+      default: "toggle"
+      selector: *action_list
+    btn_3_double:
+      name: "Zone 3 → Button Double Click"
+      default: "cycle_mode"
+      selector: *action_list
+    btn_3_hold:
+      name: "Zone 3 → Button Hold"
+      default: "set_dim"
+      selector: *action_list
+
+    # ==========================================================
+    #  FINE TUNING
+    # ==========================================================
+    step_pct:
+      name: "Step: Brightness (%)"
+      default: 10
+      selector: { number: { min: 1, max: 50, unit_of_measurement: "%" } }
+    trans_pct:
+      name: "Transition: Brightness (s)"
+      default: 0
+      selector: { number: { min: 0, max: 5, step: 0.1, unit_of_measurement: "s" } }
+    step_kelvin:
+      name: "Step: Kelvin (K)"
+      default: 400
+      selector: { number: { min: 100, max: 1000, unit_of_measurement: "K" } }
+    trans_kelvin:
+      name: "Transition: Kelvin (s)"
+      default: 0
+      selector: { number: { min: 0, max: 5, step: 0.1, unit_of_measurement: "s" } }
+    step_hue:
+      name: "Step: RGB Hue (°)"
+      default: 15
+      selector: { number: { min: 5, max: 90, unit_of_measurement: "°" } }
+    trans_hue:
+      name: "Transition: RGB Hue (s)"
+      default: 0
+      selector: { number: { min: 0, max: 5, step: 0.1, unit_of_measurement: "s" } }
+    val_bright:
+      name: "Preset: Bright (%)"
+      default: 80
+      selector: { number: { min: 1, max: 100 } }
+    val_dim:
+      name: "Preset: Dim (%)"
+      default: 20
+      selector: { number: { min: 1, max: 100 } }
+    val_cold:
+      name: "Preset: Cool (K)"
+      default: 4000
+      selector: { number: { min: 2000, max: 6500 } }
+    val_warm:
+      name: "Preset: Warm (K)"
+      default: 2200
+      selector: { number: { min: 2000, max: 6500 } }
+    debounce_ms:
+      name: "Debounce (ms)"
+      default: 150
+      selector: { number: { min: 0, max: 500, step: 10, unit_of_measurement: "ms" } }
+
+    # ==========================================================
+    #  ENTITY MAPPING — Sensors (scroll) & Events (buttons)
+    #  Search your device name in the picker.
+    #  Zone 1: (1)+(2), Zone 2: (4)+(5), Zone 3: (7)+(8)
+    #  Button 1: (3), Button 2: (6), Button 3: (9)
+    # ==========================================================
+    sensor_1:
+      name: "Sensor (1) — Zone 1 scroll up"
+      selector: { entity: { domain: sensor } }
+    sensor_2:
+      name: "Sensor (2) — Zone 1 scroll down"
+      selector: { entity: { domain: sensor } }
+    sensor_4:
+      name: "Sensor (4) — Zone 2 scroll up"
+      selector: { entity: { domain: sensor } }
+    sensor_5:
+      name: "Sensor (5) — Zone 2 scroll down"
+      selector: { entity: { domain: sensor } }
+    sensor_7:
+      name: "Sensor (7) — Zone 3 scroll up"
+      selector: { entity: { domain: sensor } }
+    sensor_8:
+      name: "Sensor (8) — Zone 3 scroll down"
+      selector: { entity: { domain: sensor } }
+    event_btn_1:
+      name: "Event (3) — Button 1"
+      selector: { entity: { domain: event } }
+    event_btn_2:
+      name: "Event (6) — Button 2"
+      selector: { entity: { domain: event } }
+    event_btn_3:
+      name: "Event (9) — Button 3"
+      selector: { entity: { domain: event } }
+
+mode: single
+max_exceeded: silent
+
+# ==============================================================
+#  VARIABLES
+# ==============================================================
+variables:
+  # Scroll lights
+  sl_z1: !input zone_1_scroll_light
+  sl_z2: !input zone_2_scroll_light
+  sl_z3: !input zone_3_scroll_light
+
+  # Button lights
+  bl_z1: !input zone_1_btn_light
+  bl_z2: !input zone_2_btn_light
+  bl_z3: !input zone_3_btn_light
+
+  # Mode helpers (input_select)
+  mode_z1: !input zone_1_mode_helper
+  mode_z2: !input zone_2_mode_helper
+  mode_z3: !input zone_3_mode_helper
+
+  # Button actions
+  b1_s: !input btn_1_single
+  b1_d: !input btn_1_double
+  b1_h: !input btn_1_hold
+  b2_s: !input btn_2_single
+  b2_d: !input btn_2_double
+  b2_h: !input btn_2_hold
+  b3_s: !input btn_3_single
+  b3_d: !input btn_3_double
+  b3_h: !input btn_3_hold
+
+  # Tuning
+  s_p: !input step_pct
+  s_k: !input step_kelvin
+  s_h: !input step_hue
+  t_p: !input trans_pct
+  t_k: !input trans_kelvin
+  t_h: !input trans_hue
+  v_bri: !input val_bright
+  v_dim: !input val_dim
+  v_cold: !input val_cold
+  v_warm: !input val_warm
+  debounce: !input debounce_ms
+
+  # Event entity IDs (for matching in actions)
+  id_e1: !input event_btn_1
+  id_e2: !input event_btn_2
+  id_e3: !input event_btn_3
+
+# ==============================================================
+#  TRIGGERS
+# ==============================================================
+triggers:
+  # Zone 1
+  - trigger: state
+    entity_id: !input sensor_1
+    id: sc_1_up
+  - trigger: state
+    entity_id: !input sensor_2
+    id: sc_1_down
+  # Zone 2
+  - trigger: state
+    entity_id: !input sensor_4
+    id: sc_2_up
+  - trigger: state
+    entity_id: !input sensor_5
+    id: sc_2_down
+  # Zone 3
+  - trigger: state
+    entity_id: !input sensor_7
+    id: sc_3_up
+  - trigger: state
+    entity_id: !input sensor_8
+    id: sc_3_down
+  # Buttons
+  - trigger: state
+    entity_id:
+      - !input event_btn_1
+      - !input event_btn_2
+      - !input event_btn_3
+    id: btn_event
+
+# ==============================================================
+#  CONDITIONS — ignore unknown/unavailable transitions
+# ==============================================================
+conditions:
+  - condition: template
+    value_template: >-
+      {{ trigger.from_state is defined and
+         trigger.from_state.state not in ['unknown', 'unavailable'] }}
+
+# ==============================================================
+#  ACTIONS
+# ==============================================================
+actions:
+  # ============================================================
+  #  SCROLL HANDLING — reads mode from input_select helper
+  # ============================================================
+  - choose:
+      - conditions: "{{ 'sc_' in trigger.id }}"
+        sequence:
+          - variables:
+              scroll_light: >
+                {% if 'sc_1' in trigger.id %} {{ sl_z1 }}
+                {% elif 'sc_2' in trigger.id %} {{ sl_z2 }}
+                {% elif 'sc_3' in trigger.id %} {{ sl_z3 }}
+                {% endif %}
+              direction: "{{ 1 if '_up' in trigger.id else -1 }}"
+              active_func: >
+                {% if 'sc_1' in trigger.id %} {{ states(mode_z1) }}
+                {% elif 'sc_2' in trigger.id %} {{ states(mode_z2) }}
+                {% elif 'sc_3' in trigger.id %} {{ states(mode_z3) }}
+                {% endif %}
+
+          - choose:
+              # --- Brightness ---
+              - conditions: "{{ active_func == 'brightness' }}"
+                sequence:
+                  - action: light.turn_on
+                    target: { entity_id: "{{ scroll_light }}" }
+                    data:
+                      brightness_step_pct: "{{ (s_p | float(default=10)) * direction }}"
+                      transition: "{{ t_p | float(default=0) }}"
+
+              # --- Kelvin ---
+              - conditions: "{{ active_func == 'kelvin' }}"
+                sequence:
+                  - action: light.turn_on
+                    target: { entity_id: "{{ scroll_light }}" }
+                    data:
+                      color_temp_kelvin: >
+                        {% set cur = state_attr(scroll_light, 'color_temp_kelvin') | int(default=3000) %}
+                        {% set step = s_k | int(default=400) %}
+                        {% if direction == 1 %} {{ ([cur + step, 6500] | min) | int }}
+                        {% else %} {{ ([cur - step, 2000] | max) | int }}
+                        {% endif %}
+                      transition: "{{ t_k | float(default=0) }}"
+
+              # --- RGB Hue ---
+              - conditions: "{{ active_func == 'rgb' }}"
+                sequence:
+                  - action: light.turn_on
+                    target: { entity_id: "{{ scroll_light }}" }
+                    data:
+                      hs_color: >
+                        {% set hs = state_attr(scroll_light, 'hs_color') %}
+                        {% set h = hs[0] | float(default=0) if hs is not none else 0 %}
+                        {% set s = hs[1] | float(default=100) if hs is not none else 100 %}
+                        {% set step = s_h | float(default=15) %}
+                        {{ [(h + (step * direction)) % 360, s] }}
+                      transition: "{{ t_h | float(default=0) }}"
+
+              # --- Presets ---
+              - conditions: "{{ active_func == 'preset' }}"
+                sequence:
+                  - action: light.turn_on
+                    target: { entity_id: "{{ scroll_light }}" }
+                    data:
+                      brightness_pct: "{{ v_bri if direction == 1 else v_dim }}"
+                      color_temp_kelvin: "{{ v_cold if direction == 1 else v_warm }}"
+                      transition: 1
+
+  # ============================================================
+  #  BUTTON HANDLING
+  # ============================================================
+  - choose:
+      - conditions: "{{ trigger.id == 'btn_event' }}"
+        sequence:
+          - variables:
+              btn_light: >
+                {% if trigger.entity_id == id_e1 %} {{ bl_z1 }}
+                {% elif trigger.entity_id == id_e2 %} {{ bl_z2 }}
+                {% elif trigger.entity_id == id_e3 %} {{ bl_z3 }}
+                {% endif %}
+              mode_helper: >
+                {% if trigger.entity_id == id_e1 %} {{ mode_z1 }}
+                {% elif trigger.entity_id == id_e2 %} {{ mode_z2 }}
+                {% elif trigger.entity_id == id_e3 %} {{ mode_z3 }}
+                {% endif %}
+              evt: "{{ trigger.to_state.attributes.event_type | default('') }}"
+              act: >
+                {% if evt == 'multi_press_1' %}
+                  {% if trigger.entity_id == id_e1 %} {{ b1_s }}
+                  {% elif trigger.entity_id == id_e2 %} {{ b2_s }}
+                  {% elif trigger.entity_id == id_e3 %} {{ b3_s }}
+                  {% endif %}
+                {% elif evt == 'multi_press_2' %}
+                  {% if trigger.entity_id == id_e1 %} {{ b1_d }}
+                  {% elif trigger.entity_id == id_e2 %} {{ b2_d }}
+                  {% elif trigger.entity_id == id_e3 %} {{ b3_d }}
+                  {% endif %}
+                {% elif evt == 'long_press' %}
+                  {% if trigger.entity_id == id_e1 %} {{ b1_h }}
+                  {% elif trigger.entity_id == id_e2 %} {{ b2_h }}
+                  {% elif trigger.entity_id == id_e3 %} {{ b3_h }}
+                  {% endif %}
+                {% else %}
+                  none
+                {% endif %}
+
+          # --- Execute resolved action ---
+          - choose:
+              - conditions: "{{ act == 'toggle' }}"
+                sequence:
+                  - action: light.toggle
+                    target: { entity_id: "{{ btn_light }}" }
+                    data: { transition: 0.5 }
+
+              - conditions: "{{ act == 'set_bright' }}"
+                sequence:
+                  - action: light.turn_on
+                    target: { entity_id: "{{ btn_light }}" }
+                    data: { brightness_pct: "{{ v_bri }}", transition: 0.5 }
+
+              - conditions: "{{ act == 'set_dim' }}"
+                sequence:
+                  - action: light.turn_on
+                    target: { entity_id: "{{ btn_light }}" }
+                    data: { brightness_pct: "{{ v_dim }}", transition: 0.5 }
+
+              - conditions: "{{ act == 'set_cold' }}"
+                sequence:
+                  - action: light.turn_on
+                    target: { entity_id: "{{ btn_light }}" }
+                    data: { color_temp_kelvin: "{{ v_cold }}", transition: 0.5 }
+
+              - conditions: "{{ act == 'set_warm' }}"
+                sequence:
+                  - action: light.turn_on
+                    target: { entity_id: "{{ btn_light }}" }
+                    data: { color_temp_kelvin: "{{ v_warm }}", transition: 0.5 }
+
+              - conditions: "{{ act == 'set_white' }}"
+                sequence:
+                  - action: light.turn_on
+                    target: { entity_id: "{{ btn_light }}" }
+                    data: { color_temp_kelvin: 4000, transition: 0.5 }
+
+              - conditions: "{{ act == 'set_red' }}"
+                sequence:
+                  - action: light.turn_on
+                    target: { entity_id: "{{ btn_light }}" }
+                    data: { hs_color: [0, 100], brightness_pct: 80, transition: 0.5 }
+
+              - conditions: "{{ act == 'set_color_on' }}"
+                sequence:
+                  - action: light.turn_on
+                    target: { entity_id: "{{ btn_light }}" }
+                    data: { hs_color: [0, 100], brightness_pct: 80, transition: 0.5 }
+
+              # --- Brightness step up ---
+              - conditions: "{{ act == 'step_bright_up' }}"
+                sequence:
+                  - action: light.turn_on
+                    target: { entity_id: "{{ btn_light }}" }
+                    data:
+                      brightness_step_pct: "{{ s_p | float(default=10) }}"
+                      transition: "{{ t_p | float(default=0) }}"
+
+              # --- Brightness step down ---
+              - conditions: "{{ act == 'step_bright_down' }}"
+                sequence:
+                  - action: light.turn_on
+                    target: { entity_id: "{{ btn_light }}" }
+                    data:
+                      brightness_step_pct: "{{ -(s_p | float(default=10)) }}"
+                      transition: "{{ t_p | float(default=0) }}"
+
+              # --- Kelvin step up (cooler) ---
+              - conditions: "{{ act == 'step_kelvin_up' }}"
+                sequence:
+                  - action: light.turn_on
+                    target: { entity_id: "{{ btn_light }}" }
+                    data:
+                      color_temp_kelvin: >
+                        {% set cur = state_attr(btn_light, 'color_temp_kelvin') | int(default=3000) %}
+                        {{ ([cur + (s_k | int(default=400)), 6500] | min) | int }}
+                      transition: "{{ t_k | float(default=0) }}"
+
+              # --- Kelvin step down (warmer) ---
+              - conditions: "{{ act == 'step_kelvin_down' }}"
+                sequence:
+                  - action: light.turn_on
+                    target: { entity_id: "{{ btn_light }}" }
+                    data:
+                      color_temp_kelvin: >
+                        {% set cur = state_attr(btn_light, 'color_temp_kelvin') | int(default=3000) %}
+                        {{ ([cur - (s_k | int(default=400)), 2000] | max) | int }}
+                      transition: "{{ t_k | float(default=0) }}"
+
+              # --- Hue step up ---
+              - conditions: "{{ act == 'step_hue_up' }}"
+                sequence:
+                  - action: light.turn_on
+                    target: { entity_id: "{{ btn_light }}" }
+                    data:
+                      hs_color: >
+                        {% set hs = state_attr(btn_light, 'hs_color') %}
+                        {% set h = hs[0] | float(default=0) if hs is not none else 0 %}
+                        {% set s = hs[1] | float(default=100) if hs is not none else 100 %}
+                        {{ [((h + (s_h | float(default=15))) % 360), s] }}
+                      transition: "{{ t_h | float(default=0) }}"
+
+              # --- Hue step down ---
+              - conditions: "{{ act == 'step_hue_down' }}"
+                sequence:
+                  - action: light.turn_on
+                    target: { entity_id: "{{ btn_light }}" }
+                    data:
+                      hs_color: >
+                        {% set hs = state_attr(btn_light, 'hs_color') %}
+                        {% set h = hs[0] | float(default=0) if hs is not none else 0 %}
+                        {% set s = hs[1] | float(default=100) if hs is not none else 100 %}
+                        {{ [((h - (s_h | float(default=15))) % 360), s] }}
+                      transition: "{{ t_h | float(default=0) }}"
+
+              # --- Cycle scroll mode ---
+              - conditions: "{{ act == 'cycle_mode' }}"
+                sequence:
+                  - action: input_select.select_next
+                    target: { entity_id: "{{ mode_helper }}" }
+                    data: { cycle: true }
+
+  # Debounce
+  - delay:
+      milliseconds: "{{ debounce | int(default=150) }}"
