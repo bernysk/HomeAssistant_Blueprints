@@ -1,12 +1,13 @@
 blueprint:
-  name: "IKEA Bilresa Scrollwheel - Multi-Light Controller V2.5"
+  name: "IKEA Bilresa Scrollwheel - Multi-Light Controller V2.6"
   description: >
     Multi-light controller for the IKEA Bilresa Smart Scroll Wheel via Matter.
-    Each zone has ONE light that is shared between scroll and button.
+    Each zone has SEPARATE lights for scroll and button (can be the same entity).
 
     FEATURES:
-    - 3 Zones: Each with its own Light, Scroll Function, and Button actions.
-    - All 9 actions available for Single / Double / Hold (same dropdown).
+    - 3 Zones: Each with Scroll Light, Scroll Function, Button Light, and Button actions.
+    - 15 button actions: Toggle, presets, step brightness/kelvin/hue up or down.
+    - Configurable debounce.
 
     ENTITY MAPPING:
     Your Bilresa exposes 9 numbered entities per zone:
@@ -21,7 +22,7 @@ blueprint:
     HELPER GROUP:
     If controlling multiple lights from one zone, use a Light Group helper.
 
-    Based on V1.0.4 by original author stone13. Multi-light rewrite V2.5 by bernysk using Claude AI.
+    Based on V1.0.4 by original author stone13. Multi-light rewrite V2.6 by bernysk using Claude AI.
   # original reference https://gist.github.com/stone13/63a778bdbf55efbd712ade1d074e9dbb
   domain: automation
 
@@ -29,8 +30,8 @@ blueprint:
     # ==========================================================
     #  ZONE 1 — Scroll (Sensors 1 & 2) + Button (Event 3)
     # ==========================================================
-    zone_1_light:
-      name: "Zone 1 → Light (scroll + button)"
+    zone_1_scroll_light:
+      name: "Zone 1 → Scroll Light"
       selector: { entity: { domain: light } }
     scroll_1_func:
       name: "Zone 1 → Scroll Function"
@@ -47,6 +48,9 @@ blueprint:
               value: "rgb"
             - label: "Presets (Work ↔ Cozy)"
               value: "preset"
+    zone_1_btn_light:
+      name: "Zone 1 → Button Light"
+      selector: { entity: { domain: light } }
     btn_1_single:
       name: "Zone 1 → Button Single Click"
       default: "toggle"
@@ -70,6 +74,18 @@ blueprint:
               value: "set_red"
             - label: "→ Enable Color (Saturation On)"
               value: "set_color_on"
+            - label: "↑ Brightness Step Up"
+              value: "step_bright_up"
+            - label: "↓ Brightness Step Down"
+              value: "step_bright_down"
+            - label: "↑ Kelvin Step Up (Cooler)"
+              value: "step_kelvin_up"
+            - label: "↓ Kelvin Step Down (Warmer)"
+              value: "step_kelvin_down"
+            - label: "↑ Hue Step Up"
+              value: "step_hue_up"
+            - label: "↓ Hue Step Down"
+              value: "step_hue_down"
             - label: "No Action"
               value: "none"
     btn_1_double:
@@ -84,13 +100,16 @@ blueprint:
     # ==========================================================
     #  ZONE 2 — Scroll (Sensors 4 & 5) + Button (Event 6)
     # ==========================================================
-    zone_2_light:
-      name: "Zone 2 → Light (scroll + button)"
+    zone_2_scroll_light:
+      name: "Zone 2 → Scroll Light"
       selector: { entity: { domain: light } }
     scroll_2_func:
       name: "Zone 2 → Scroll Function"
       default: "brightness"
       selector: *scroll_func
+    zone_2_btn_light:
+      name: "Zone 2 → Button Light"
+      selector: { entity: { domain: light } }
     btn_2_single:
       name: "Zone 2 → Button Single Click"
       default: "toggle"
@@ -107,13 +126,16 @@ blueprint:
     # ==========================================================
     #  ZONE 3 — Scroll (Sensors 7 & 8) + Button (Event 9)
     # ==========================================================
-    zone_3_light:
-      name: "Zone 3 → Light (scroll + button)"
+    zone_3_scroll_light:
+      name: "Zone 3 → Scroll Light"
       selector: { entity: { domain: light } }
     scroll_3_func:
       name: "Zone 3 → Scroll Function"
       default: "brightness"
       selector: *scroll_func
+    zone_3_btn_light:
+      name: "Zone 3 → Button Light"
+      selector: { entity: { domain: light } }
     btn_3_single:
       name: "Zone 3 → Button Single Click"
       default: "toggle"
@@ -216,10 +238,15 @@ max_exceeded: silent
 #  VARIABLES
 # ==============================================================
 variables:
-  # Lights (shared per zone: scroll + button)
-  light_z1: !input zone_1_light
-  light_z2: !input zone_2_light
-  light_z3: !input zone_3_light
+  # Scroll lights
+  sl_z1: !input zone_1_scroll_light
+  sl_z2: !input zone_2_scroll_light
+  sl_z3: !input zone_3_scroll_light
+
+  # Button lights
+  bl_z1: !input zone_1_btn_light
+  bl_z2: !input zone_2_btn_light
+  bl_z3: !input zone_3_btn_light
 
   # Scroll functions
   func_z1: !input scroll_1_func
@@ -309,9 +336,9 @@ actions:
         sequence:
           - variables:
               scroll_light: >
-                {% if 'sc_1' in trigger.id %} {{ light_z1 }}
-                {% elif 'sc_2' in trigger.id %} {{ light_z2 }}
-                {% elif 'sc_3' in trigger.id %} {{ light_z3 }}
+                {% if 'sc_1' in trigger.id %} {{ sl_z1 }}
+                {% elif 'sc_2' in trigger.id %} {{ sl_z2 }}
+                {% elif 'sc_3' in trigger.id %} {{ sl_z3 }}
                 {% endif %}
               direction: "{{ 1 if '_up' in trigger.id else -1 }}"
               active_func: >
@@ -376,9 +403,9 @@ actions:
         sequence:
           - variables:
               btn_light: >
-                {% if trigger.entity_id == id_e1 %} {{ light_z1 }}
-                {% elif trigger.entity_id == id_e2 %} {{ light_z2 }}
-                {% elif trigger.entity_id == id_e3 %} {{ light_z3 }}
+                {% if trigger.entity_id == id_e1 %} {{ bl_z1 }}
+                {% elif trigger.entity_id == id_e2 %} {{ bl_z2 }}
+                {% elif trigger.entity_id == id_e3 %} {{ bl_z3 }}
                 {% endif %}
               evt: "{{ trigger.to_state.attributes.event_type | default('') }}"
               act: >
@@ -450,6 +477,72 @@ actions:
                   - action: light.turn_on
                     target: { entity_id: "{{ btn_light }}" }
                     data: { hs_color: [0, 100], brightness_pct: 80, transition: 0.5 }
+
+              # --- Brightness step up ---
+              - conditions: "{{ act == 'step_bright_up' }}"
+                sequence:
+                  - action: light.turn_on
+                    target: { entity_id: "{{ btn_light }}" }
+                    data:
+                      brightness_step_pct: "{{ s_p | float(default=10) }}"
+                      transition: "{{ t_p | float(default=0) }}"
+
+              # --- Brightness step down ---
+              - conditions: "{{ act == 'step_bright_down' }}"
+                sequence:
+                  - action: light.turn_on
+                    target: { entity_id: "{{ btn_light }}" }
+                    data:
+                      brightness_step_pct: "{{ -(s_p | float(default=10)) }}"
+                      transition: "{{ t_p | float(default=0) }}"
+
+              # --- Kelvin step up (cooler) ---
+              - conditions: "{{ act == 'step_kelvin_up' }}"
+                sequence:
+                  - action: light.turn_on
+                    target: { entity_id: "{{ btn_light }}" }
+                    data:
+                      color_temp_kelvin: >
+                        {% set cur = state_attr(btn_light, 'color_temp_kelvin') | int(default=3000) %}
+                        {{ ([cur + (s_k | int(default=400)), 6500] | min) | int }}
+                      transition: "{{ t_k | float(default=0) }}"
+
+              # --- Kelvin step down (warmer) ---
+              - conditions: "{{ act == 'step_kelvin_down' }}"
+                sequence:
+                  - action: light.turn_on
+                    target: { entity_id: "{{ btn_light }}" }
+                    data:
+                      color_temp_kelvin: >
+                        {% set cur = state_attr(btn_light, 'color_temp_kelvin') | int(default=3000) %}
+                        {{ ([cur - (s_k | int(default=400)), 2000] | max) | int }}
+                      transition: "{{ t_k | float(default=0) }}"
+
+              # --- Hue step up ---
+              - conditions: "{{ act == 'step_hue_up' }}"
+                sequence:
+                  - action: light.turn_on
+                    target: { entity_id: "{{ btn_light }}" }
+                    data:
+                      hs_color: >
+                        {% set hs = state_attr(btn_light, 'hs_color') %}
+                        {% set h = hs[0] | float(default=0) if hs is not none else 0 %}
+                        {% set s = hs[1] | float(default=100) if hs is not none else 100 %}
+                        {{ [((h + (s_h | float(default=15))) % 360), s] }}
+                      transition: "{{ t_h | float(default=0) }}"
+
+              # --- Hue step down ---
+              - conditions: "{{ act == 'step_hue_down' }}"
+                sequence:
+                  - action: light.turn_on
+                    target: { entity_id: "{{ btn_light }}" }
+                    data:
+                      hs_color: >
+                        {% set hs = state_attr(btn_light, 'hs_color') %}
+                        {% set h = hs[0] | float(default=0) if hs is not none else 0 %}
+                        {% set s = hs[1] | float(default=100) if hs is not none else 100 %}
+                        {{ [((h - (s_h | float(default=15))) % 360), s] }}
+                      transition: "{{ t_h | float(default=0) }}"
 
   # Debounce
   - delay:
